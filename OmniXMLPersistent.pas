@@ -111,6 +111,7 @@ procedure CreateDocument(var XMLDoc: IXMLDocument; var Root: IXMLElement;
   RootNodeName: XmlString);
 begin
   XMLDoc := CreateXMLDoc;
+  XMLDoc.AppendChild(XMLDoc.CreateProcessingInstruction('xml', 'version="1.0" encoding="utf-8"'));
   Root := XMLDoc.CreateElement(RootNodeName);
   XMLDoc.DocumentElement := Root;
 end;
@@ -253,7 +254,7 @@ var
     else
       Value := GetStrProp(Instance, PropInfo);
 
-    if Value <> '' then
+    if (Value <> EmptyStr) or (WriteDefaultValues) then
       InternalWriteText(Element, XmlString(PPropInfo(PropInfo)^.Name), Value);
   end;
 
@@ -262,7 +263,7 @@ var
     Value: Longint;
   begin
     Value := GetOrdProp(Instance, PropInfo);
-    if WriteDefaultValues or (Value <> PPropInfo(PropInfo)^.Default) then begin
+    if (WriteDefaultValues) or (Value <> PPropInfo(PropInfo)^.Default) then begin
       case PropType^.Kind of
         tkInteger: InternalWriteText(Element, XmlString(PPropInfo(PropInfo)^.Name), XMLIntToStr(Value));
         tkChar:
@@ -295,7 +296,7 @@ var
     Value: Real;
   begin
     Value := GetFloatProp(Instance, PropInfo);
-    if Value <> 0 then
+    if (Value <> 0) or (WriteDefaultValues) then
       InternalWriteText(Element, XmlString(PPropInfo(PropInfo)^.Name), XMLRealToStr(Value));
   end;
 
@@ -304,7 +305,7 @@ var
     Value: TDateTime;
   begin
     Value := VarAsType(GetFloatProp(Instance, PropInfo), varDate);
-    if Value <> 0 then
+    if (Value <> 0) or (WriteDefaultValues) then
       InternalWriteText(Element, XmlString(PPropInfo(PropInfo)^.Name), XMLDateTimeToStrEx(Value));
   end;
 
@@ -313,7 +314,7 @@ var
     Value: Int64;
   begin
     Value := GetInt64Prop(Instance, PropInfo);
-    if Value <> 0 then
+    if (Value <> 0) or (WriteDefaultValues) then
       InternalWriteText(Element, XmlString(PPropInfo(PropInfo)^.Name), XMLInt64ToStr(Value));
   end;
 
@@ -646,7 +647,7 @@ var
         tkEnumeration:
           begin
             if PropType = System.TypeInfo(Boolean) then begin
-              if XMLStrToBool(Value, BoolValue) then
+              if XMLStrToBool(LowerCase(Value), BoolValue) then
                 SetOrdProp(Instance, PropInfo, Ord(BoolValue))
               else
                 raise EOmniXMLPersistent.CreateFmt('Invalid boolean value (%s).', [Value]);
